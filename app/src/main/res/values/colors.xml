@@ -7,4 +7,16 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!--
+    Screen background: #040D14
+    Wheel item darker background: #040D14
+    Wheel item lighter background: #141A1E
+    Button pink color: #FDAEB6
+    -->
+    <color name="default_background">#040D14</color>
+    <color name="wheel_item_dark">#040D14</color>
+    <color name="wheel_item_light">#141A1E </color>
+    <color name="pink">#FDAEB6</color>
+    <color name="yellow">#f9a825</color>
 </resources>
