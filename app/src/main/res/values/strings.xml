@@ -3,4 +3,6 @@
     <string name="hello_blank_fragment">Howdy blank fragment</string>
     <string name="spin_the_wheel_text">Spin the Wheel</string>
     <string name="wheel_game_bar_text">Wheel Game</string>
+    <string name="wheel_ticker_contdesc">Animated wheel ticker, indicates prizes won</string>
+    <string name="spin_text">Spin!</string>
 </resources>

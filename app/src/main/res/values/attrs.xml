@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="GameWheelView">
+        <attr name="backgroundColor" format="color" />
+        <attr name="lightBackgroundColor" format="color" />
+        <attr name="textColor" format="color" />
+    </declare-styleable>
+</resources>

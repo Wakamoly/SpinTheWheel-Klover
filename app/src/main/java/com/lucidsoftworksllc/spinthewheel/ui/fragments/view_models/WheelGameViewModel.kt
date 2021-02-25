@@ -29,7 +29,7 @@ class WheelGameViewModel (
                     showToast.value = result.message
                 }
                 is DataState.Success -> {
-                    showToast.value = result.data[0].displayText
+                    //showToast.value = result.data[0].displayText
                     _wheelInfo.value = result.data
                 }
                 else -> {} // Do nothing
