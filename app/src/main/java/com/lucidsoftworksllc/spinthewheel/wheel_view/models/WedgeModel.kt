@@ -5,7 +5,6 @@ import android.graphics.PointF
 import com.lucidsoftworksllc.spinthewheel.models.WheelSpinnerResponseModel
 
 // Model for a single wedge
-// TODO: 2/25/2021 Set value to Wheel data class?
 data class WedgeModel(
     val name: String,
     var value: WheelSpinnerResponseModel.WheelSpinnerResponseModelItem,

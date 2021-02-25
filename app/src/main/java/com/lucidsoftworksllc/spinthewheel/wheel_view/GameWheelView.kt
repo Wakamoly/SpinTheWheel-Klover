@@ -4,14 +4,10 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Rect
-import android.graphics.RectF
+import android.graphics.*
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
-import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import androidx.core.content.ContextCompat
 import com.lucidsoftworksllc.spinthewheel.R
@@ -20,6 +16,7 @@ import com.lucidsoftworksllc.spinthewheel.wheel_view.models.WedgeModel
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.random.Random
 
 class GameWheelView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -31,14 +28,11 @@ class GameWheelView @JvmOverloads constructor(
 
     // Data
     private var wedgeData: WedgeData? = null
-    private var progress: Float = 0f
+    private var maxProgress: Float = 0f
     private var lastProgress: Float = 0f
 
     // Graphics
     private val borderPaint = Paint()
-    private val linePaint = Paint()
-    private val indicatorCirclePaint = Paint()
-    private var indicatorCircleRadius = 0f
     private val mainTextPaint = Paint()
     private val oval = RectF()
     private val circleRect = RectF()
@@ -55,14 +49,20 @@ class GameWheelView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
+        circleRect.set(0f + 20f, 0f + 20f, width.toFloat() - 20f, height.toFloat() - 20f)
         canvas?.drawArc(
             circleRect, 0f, 360f, true, borderPaint
         )
-        wedgeData?.wedgeSlices?.let { slices ->
-            slices.forEach {
-                canvas?.drawArc(oval, it.value.startAngle, it.value.sweepAngle, true, it.value.paint)
-                canvas?.drawArc(oval, it.value.startAngle, it.value.sweepAngle, true, borderPaint)
-                drawIndicators(canvas, it.value)
+        wedgeData?.wedgeSlices?.let { wedges ->
+            wedges.forEach {
+                canvas?.drawArc(
+                    oval,
+                    it.value.startAngle + lastProgress,
+                    it.value.sweepAngle,
+                    true,
+                    it.value.paint
+                )
+                drawIndicatorText(canvas, it.value)
             }
         }
     }
@@ -83,28 +83,20 @@ class GameWheelView @JvmOverloads constructor(
             try {
                 // styleable colors from XML attrs
                 backColor = getColor(R.styleable.GameWheelView_backgroundColor, backColor)
-                lightBackColor = getColor(R.styleable.GameWheelView_lightBackgroundColor, lightBackColor)
+                lightBackColor = getColor(
+                    R.styleable.GameWheelView_lightBackgroundColor,
+                    lightBackColor
+                )
                 textColor = getColor(R.styleable.GameWheelView_textColor, textColor)
             } finally {
                 recycle()
             }
         }
+
         borderPaint.apply {
-            style = Paint.Style.STROKE
-            isAntiAlias = true
-            color = backColor
-        }
-        indicatorCirclePaint.apply {
-            style = Paint.Style.FILL
+            style = Paint.Style.FILL_AND_STROKE
             isAntiAlias = true
             color = lightBackColor
-            alpha = 0
-        }
-        linePaint.apply {
-            style = Paint.Style.STROKE
-            isAntiAlias = true
-            color = lightBackColor
-            alpha = 0
         }
         mainTextPaint.apply {
             isAntiAlias = true
@@ -120,6 +112,7 @@ class GameWheelView @JvmOverloads constructor(
     fun setData(newData: WheelSpinnerResponseModel) {
         wedgeData = WedgeData()
         for (model in newData) {
+            // Is even or odd
             if (model.id?.toInt()?.rem(2) ?: 1 == 0) {
                 wedgeData?.add(model.displayText.toString(), model, lightBackColor)
             }
@@ -145,7 +138,7 @@ class GameWheelView @JvmOverloads constructor(
     }
 
     /**
-     * Use the angle between the start and sweep angles to help get position of the indicator circle
+     * Use the angle between the start and sweep angles to help get position of the center of the circle
      * formula for x pos: (length of line) * cos(middleAngle) + (distance from left edge of screen)
      * formula for y pos: (length of line) * sin(middleAngle) + (distance from top edge of screen)
      *
@@ -154,31 +147,26 @@ class GameWheelView @JvmOverloads constructor(
     private fun setIndicatorLocation(key: String) {
         wedgeData?.wedgeSlices?.get(key)?.let {
             val middleAngle = it.sweepAngle / 2 + it.startAngle
-            it.indicatorCircleLocation.x = (layoutParams.height.toFloat() / 2 - layoutParams.height / 8) *
-                    cos(Math.toRadians(middleAngle.toDouble())).toFloat() + width / 2
-            it.indicatorCircleLocation.y = (layoutParams.height.toFloat() / 2 - layoutParams.height / 8) *
-                    sin(Math.toRadians(middleAngle.toDouble())).toFloat() + layoutParams.height / 2
+            it.indicatorCircleLocation.x = cos(Math.toRadians(middleAngle.toDouble())).toFloat() + width / 2
+            it.indicatorCircleLocation.y = sin(Math.toRadians(middleAngle.toDouble())).toFloat() + height / 2
         }
     }
 
     /**
-     * Sets the bounds of the wheel
+     * Sets the bounds of the wheel wedges
      *
-     * @param top the top bound of the circle. top of view by default
-     * @param bottom the bottom bound of the circle. bottom of view by default
-     * @param left the left bound of the circle. half of height by default
-     * @param right the right bound of the circle. half of height by default
+     * @param top the top bound of the circle.
+     * @param bottom the bottom bound of the circle.
+     * @param left the left bound of the circle.
+     * @param right the right bound of the circle.
      */
     private fun setCircleBounds(
-        top: Float = 0f,
-        bottom: Float = layoutParams.height.toFloat(),
-        left: Float = (width / 2) - (layoutParams.height / 2).toFloat(),
-        right: Float = (width / 2) + (layoutParams.height / 2).toFloat()
+        top: Float = 60f,
+        bottom: Float = height.toFloat() - 60f,
+        left: Float = (width / 2) - (height / 2).toFloat() + 60f,
+        right: Float = (width / 2) + (height / 2).toFloat() - 60f
     ) {
-        oval.top = top
-        oval.bottom = bottom
-        oval.left = left
-        oval.right = right
+        oval.set(left, top, right, bottom)
     }
 
     /**
@@ -186,9 +174,6 @@ class GameWheelView @JvmOverloads constructor(
      */
     private fun setGraphicSizes() {
         mainTextPaint.textSize = height / 15f
-        borderPaint.strokeWidth = height / 80f
-        linePaint.strokeWidth = height / 120f
-        indicatorCircleRadius = height / 70f
     }
 
     /**
@@ -204,62 +189,32 @@ class GameWheelView @JvmOverloads constructor(
     }
 
     /**
-     * Draws the indicators for projects displayed on the wheel
+     * Draws indicator names onto the canvas
      *
-     * @param canvas the canvas used to draw onto the screen
-     * @param wedgeItem the project information to display
+     * @param canvas the canvas to draw onto
+     * @param wedgeItem the wedge data to draw
      */
-    private fun drawIndicators(canvas: Canvas?, wedgeItem: WedgeModel) {
-        // draw line & text for indicator circle if on left side of the wheel
-        if (wedgeItem.indicatorCircleLocation.x < width / 2) {
-            drawIndicatorLine(canvas, wedgeItem, IndicatorAlignment.LEFT)
-            drawIndicatorText(canvas, wedgeItem, IndicatorAlignment.LEFT)
-            // draw line & text for indicator circle if on right side of the wheel
-        } else {
-            drawIndicatorLine(canvas, wedgeItem, IndicatorAlignment.RIGHT)
-            drawIndicatorText(canvas, wedgeItem, IndicatorAlignment.RIGHT)
+    private fun drawIndicatorText(canvas: Canvas?, wedgeItem: WedgeModel) {
+        mainTextPaint.textAlign = Paint.Align.CENTER
+        val path = Path().apply {
+            moveTo(wedgeItem.indicatorCircleLocation.x + lastProgress, wedgeItem.indicatorCircleLocation.y + lastProgress)
+            close()
         }
-        // draw indicator circles for wedgeItem
-        canvas?.drawCircle(wedgeItem.indicatorCircleLocation.x, wedgeItem.indicatorCircleLocation.y,
-            indicatorCircleRadius, indicatorCirclePaint)
-    }
-
-    /**
-     * Draws indicator lines onto the canvas dependent on which side the of the pie the slice is on
-     *
-     * @param canvas the canvas to draw onto
-     * @param wedgeItem the pie data to draw
-     * @param alignment which side of the pie chart this particular slice is on
-     */
-    private fun drawIndicatorLine(canvas: Canvas?, wedgeItem: WedgeModel, alignment: IndicatorAlignment) {
-        val xOffset = if (alignment == IndicatorAlignment.LEFT) width / 4 * -1 else width / 4
-        canvas?.drawLine(
-            wedgeItem.indicatorCircleLocation.x, wedgeItem.indicatorCircleLocation.y,
-            wedgeItem.indicatorCircleLocation.x + xOffset, wedgeItem.indicatorCircleLocation.y, linePaint
+        canvas?.drawPath(path, mainTextPaint)
+        canvas?.drawTextOnPath(wedgeItem.name, path, 0f, 0f, mainTextPaint)
+        canvas?.drawText(
+            wedgeItem.name, wedgeItem.indicatorCircleLocation.x,
+            wedgeItem.indicatorCircleLocation.y, mainTextPaint
         )
-    }
-
-    /**
-     * Draws indicator names onto the canvas dependent on which side the of the pie the slice is on
-     *
-     * @param canvas the canvas to draw onto
-     * @param wedgeItem the pie data to draw
-     * @param alignment which side of the pie chart this particular slice is on
-     */
-    private fun drawIndicatorText(canvas: Canvas?, wedgeItem: WedgeModel, alignment: IndicatorAlignment) {
-        val xOffset = if (alignment == IndicatorAlignment.LEFT) width / 4 * -1 else width / 4
-        if (alignment == IndicatorAlignment.LEFT) mainTextPaint.textAlign = Paint.Align.LEFT
-        else mainTextPaint.textAlign = Paint.Align.RIGHT
-        canvas?.drawText(wedgeItem.name, wedgeItem.indicatorCircleLocation.x + xOffset,
-            wedgeItem.indicatorCircleLocation.y - 10, mainTextPaint)
     }
 
     private fun setAnim() {
         valueAnimator.cancel()
-        valueAnimator = ValueAnimator.ofFloat(progress, lastProgress).apply {
+        maxProgress = Random.nextDouble(1700.0, 2400.0).toFloat()
+        valueAnimator = ValueAnimator.ofFloat(lastProgress, maxProgress).apply {
             interpolator = DecelerateInterpolator()
             // 1.5 second for 100% progress, 750ms for 50% progress, etc.
-            val animDuration = abs(1500 * ((lastProgress - progress) / 100)).toLong()
+            val animDuration = abs(5 * ((lastProgress + maxProgress))).toLong()
             // set minimum increment of progress duration to 400ms
             duration = if (animDuration >= 400){
                 animDuration
@@ -267,15 +222,17 @@ class GameWheelView @JvmOverloads constructor(
                 400
             }
             addUpdateListener { animation ->
-                progress = animation.animatedValue as Float
+                lastProgress = animation.animatedValue as Float
+                Log.d(TAG, "setAnim: $maxProgress, $lastProgress")
                 postInvalidate()
             }
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
                     super.onAnimationEnd(animation)
-                    if (progress == 1f){
+                    Log.d(TAG, "onAnimationEnd: Animation ended")
+                    if (maxProgress == 1f) {
                         resetProgress()
-                    }else{
+                    } else {
                         valueAnimator.cancel()
                     }
                 }
@@ -291,7 +248,7 @@ class GameWheelView @JvmOverloads constructor(
 
     fun spin() {
         tickerListener?.onTick(v = this)
-        setAnim()
+        resetProgress()
     }
 
     /**
@@ -321,7 +278,7 @@ class GameWheelView @JvmOverloads constructor(
         tickerListener = listener
     }
 
-    fun setOnTickListener(listener: (v : View) -> Unit) {
+    fun setOnTickListener(listener: (v: View) -> Unit) {
         tickerListener = object : OnTickerTickListener {
             override fun onTick(v: View) {
                 listener(v)
@@ -336,8 +293,4 @@ class GameWheelView @JvmOverloads constructor(
         }
     }
 
-}
-
-enum class IndicatorAlignment {
-    LEFT, RIGHT
 }
