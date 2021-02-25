@@ -9,7 +9,19 @@
         android:id="@+id/welcomeFragment"
         android:name="com.lucidsoftworksllc.spinthewheel.ui.fragments.WelcomeFragment"
         android:label="@string/wheel_game_bar_text"
-        tools:layout="@layout/fragment_welcome"/>
-
+        tools:layout="@layout/fragment_welcome">
+        <action
+            android:id="@+id/action_welcomeFragment_to_wheelGameFragment"
+            app:destination="@id/wheelGameFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+    <fragment
+        android:id="@+id/wheelGameFragment"
+        android:name="com.lucidsoftworksllc.spinthewheel.ui.fragments.WheelGameFragment"
+        android:label="@string/spin_the_wheel_text"
+        tools:layout="@layout/wheel_game_fragment" />
 
 </navigation>

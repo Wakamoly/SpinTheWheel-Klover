@@ -1,7 +1,6 @@
 <resources>
     <string name="app_name">SpinTheWheel</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="hello_blank_fragment">Howdy blank fragment</string>
     <string name="spin_the_wheel_text">Spin the Wheel</string>
     <string name="wheel_game_bar_text">Wheel Game</string>
 </resources>
