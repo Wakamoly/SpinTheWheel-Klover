@@ -227,7 +227,7 @@ class GameWheelView @JvmOverloads constructor(
                 val velocity = (maxProgress - lastProgress) / elapsedTime
                 // A rather messy solution, but it does the job.
                 if (velocity > 9.0000000E-4f) {
-                    for (i in IntRange(progressRounded, progressRounded+10)){
+                    for (i in IntRange(progressRounded, progressRounded+8)){
                         if (i % divisible == 0){
                             tickerListener?.onTick(v = this@GameWheelView)
                         }
