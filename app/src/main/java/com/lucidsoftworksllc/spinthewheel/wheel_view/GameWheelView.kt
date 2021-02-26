@@ -49,7 +49,7 @@ class GameWheelView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-        circleRect.set(0f + 20f, 0f + 20f, width.toFloat() - 20f, height.toFloat() - 20f)
+        circleRect.set((width / 2) - (height / 2).toFloat() + 20f, 0f + 20f, (width / 2) + (height / 2) - 20f, height.toFloat() - 20f)
         canvas?.drawArc(
             circleRect, 0f, 360f, true, borderPaint
         )
@@ -125,7 +125,9 @@ class GameWheelView @JvmOverloads constructor(
     private fun initView() {
         var lastAngle = 0f
         wedgeData?.wedgeSlices?.forEach {
+            // TODO: 2/26/2021 Seems to randomize order on older API levels?
             // starting angle is the location of the last angle drawn
+            Log.d(TAG, "initView: ${it.value.value.id}")
             it.value.startAngle = lastAngle
             it.value.sweepAngle = 360f / wedgeData?.totalValue!!
             lastAngle += it.value.sweepAngle
