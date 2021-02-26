@@ -29,6 +29,11 @@ class WheelGameFragment : Fragment() {
         ViewModelFactory(WheelGameRepository(RemoteDataSource().buildApi(WheelGameAPI::class.java)))
     }
 
+    override fun onStop() {
+        super.onStop()
+        binding.gameWheelView.stop()
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -45,14 +50,21 @@ class WheelGameFragment : Fragment() {
         binding.spinThatDangOlWheelButton.setOnClickListener {
             binding.gameWheelView.spin()
         }
-        binding.gameWheelView.setOnTickListener(object : GameWheelView.OnTickerTickListener{
-            override fun onTick(v: View) { tickTicker() }
+        binding.gameWheelView.setOnTickListener(object : GameWheelView.OnTickerTickListener {
+            override fun onTick(v: View) {
+                tickTicker()
+            }
+
             override fun onFinished(
                 v: View,
                 data: WheelSpinnerResponseModel.WheelSpinnerResponseModelItem
             ) {
-                val resultString = data.displayText
+                val resultString = getString(R.string.you_won_yay) + " ${data.displayText} ${data.currency}!"
                 viewModel.showToast.value = resultString
+            }
+
+            override fun onError(e: String) {
+                viewModel.showToast.value = e
             }
 
         })

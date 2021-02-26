@@ -210,7 +210,7 @@ class GameWheelView @JvmOverloads constructor(
         maxProgress += Random.nextDouble(1700.0, 2500.0).toFloat()
         valueAnimator = ValueAnimator.ofFloat(lastProgress, maxProgress).apply {
             interpolator = DecelerateInterpolator()
-            duration = abs(7 * ((lastProgress + maxProgress))).toLong()
+            duration = abs(5 * ((lastProgress + maxProgress))).toLong()
 
             addUpdateListener { animation ->
                 lastProgress = animation.animatedValue as Float
@@ -270,8 +270,18 @@ class GameWheelView @JvmOverloads constructor(
     }
 
     fun spin() {
-        // resetProgress() instead of setAnim() in-case of user tapping "Spin!" before the animation finished.
-        resetProgress()
+        wedgeData?.let {
+            // resetProgress() instead of setAnim() in-case of user tapping "Spin!" before the animation finished.
+            resetProgress()
+        } ?: kotlin.run{
+            tickerListener?.onError(context.getString(R.string.err_wedgedata_null))
+        }
+    }
+
+    fun stop() {
+        valueAnimator.cancel()
+        lastProgress = 0f
+        wedgeData = null
     }
 
     /**
@@ -290,6 +300,12 @@ class GameWheelView @JvmOverloads constructor(
          * @param data: The resulting data class when the animation is finished.
          */
         fun onFinished(v: View, data: WheelSpinnerResponseModel.WheelSpinnerResponseModelItem)
+
+        /**
+         * Called when a GameWheelView encountered an error
+         * @param e: The error string given.
+         */
+        fun onError(e: String)
     }
 
     /**
