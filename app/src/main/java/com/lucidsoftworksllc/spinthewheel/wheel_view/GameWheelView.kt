@@ -56,6 +56,7 @@ class GameWheelView @JvmOverloads constructor(
         )
         wedgeData?.wedgeSlices?.let { wedges ->
             wedges.forEach {
+                setIndicatorLocation(it.key)
                 canvas?.drawArc(
                     oval,
                     it.value.startAngle + lastProgress,
@@ -102,7 +103,6 @@ class GameWheelView @JvmOverloads constructor(
         mainTextPaint.apply {
             isAntiAlias = true
             color = textColor
-            alpha = 0
         }
     }
 
@@ -147,9 +147,11 @@ class GameWheelView @JvmOverloads constructor(
      */
     private fun setIndicatorLocation(key: String) {
         wedgeData?.wedgeSlices?.get(key)?.let {
-            val middleAngle = it.sweepAngle / 2 + it.startAngle
-            it.indicatorCircleLocation.x = cos(Math.toRadians(middleAngle.toDouble())).toFloat() + width / 2
-            it.indicatorCircleLocation.y = sin(Math.toRadians(middleAngle.toDouble())).toFloat() + height / 2
+            val middleAngle = (it.sweepAngle / 2 + it.startAngle) + lastProgress
+            it.indicatorCircleLocation.x = (height.toFloat() / 2 - height / 8) *
+                    cos(Math.toRadians(middleAngle.toDouble())).toFloat() + width / 2
+            it.indicatorCircleLocation.y = (height.toFloat() / 2 - height / 8) *
+                    sin(Math.toRadians(middleAngle.toDouble())).toFloat() + height / 2
         }
     }
 
@@ -174,7 +176,7 @@ class GameWheelView @JvmOverloads constructor(
      * Sets the text sizes and thickness of graphics used in the view
      */
     private fun setGraphicSizes() {
-        mainTextPaint.textSize = height / 15f
+        mainTextPaint.textSize = height / 25f
     }
 
     /**
@@ -196,17 +198,13 @@ class GameWheelView @JvmOverloads constructor(
      * @param wedgeItem the wedge data to draw
      */
     private fun drawIndicatorText(canvas: Canvas?, wedgeItem: WedgeModel) {
-        mainTextPaint.textAlign = Paint.Align.CENTER
         val path = Path().apply {
-            moveTo(wedgeItem.indicatorCircleLocation.x + lastProgress, wedgeItem.indicatorCircleLocation.y + lastProgress)
+            moveTo(wedgeItem.indicatorCircleLocation.x, wedgeItem.indicatorCircleLocation.y)
+            lineTo(oval.centerX(), oval.centerY())
             close()
         }
         canvas?.drawPath(path, mainTextPaint)
         canvas?.drawTextOnPath(wedgeItem.name, path, 0f, 0f, mainTextPaint)
-        canvas?.drawText(
-            wedgeItem.name, wedgeItem.indicatorCircleLocation.x,
-            wedgeItem.indicatorCircleLocation.y, mainTextPaint
-        )
     }
 
     private fun setAnim() {
@@ -214,7 +212,6 @@ class GameWheelView @JvmOverloads constructor(
         maxProgress = Random.nextDouble(700.0, 1500.0).toFloat()
         valueAnimator = ValueAnimator.ofFloat(lastProgress, maxProgress).apply {
             interpolator = DecelerateInterpolator()
-            // 1.5 second for 100% progress, 750ms for 50% progress, etc.
             val animDuration = abs(15 * ((lastProgress + maxProgress))).toLong()
             // set minimum increment of progress duration to 400ms
             duration = if (animDuration >= 400){
@@ -237,6 +234,7 @@ class GameWheelView @JvmOverloads constructor(
                     super.onAnimationEnd(animation)
                     valueAnimator.cancel()
                     // TODO: 2/25/2021 Send ending value to listener
+
                 }
             })
             start()
@@ -249,7 +247,7 @@ class GameWheelView @JvmOverloads constructor(
     }
 
     fun spin() {
-        tickerListener?.onTick(v = this)
+        // resetProgress() instead of setAnim() in-case of user tapping "Spin!" before the animation finished.
         resetProgress()
     }
 
