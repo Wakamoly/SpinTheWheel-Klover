@@ -50,10 +50,10 @@
             app:layout_constraintStart_toStartOf="parent"
             style="@style/PinkButtonStyle"
             android:enabled="@{viewmodel.dataLoaded}"
-            tools:enabled="false"
             android:text="@string/spin_text"
             android:textAllCaps="false"
             android:textColor="@color/black"
+            android:textStyle="bold"
             android:layout_margin="@dimen/margin_large"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

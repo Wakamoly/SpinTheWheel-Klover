@@ -209,10 +209,10 @@ class GameWheelView @JvmOverloads constructor(
 
     private fun setAnim() {
         valueAnimator.cancel()
-        maxProgress = Random.nextDouble(700.0, 1500.0).toFloat()
+        maxProgress += Random.nextDouble(700.0, 1500.0).toFloat()
         valueAnimator = ValueAnimator.ofFloat(lastProgress, maxProgress).apply {
             interpolator = DecelerateInterpolator()
-            val animDuration = abs(15 * ((lastProgress + maxProgress))).toLong()
+            val animDuration = abs(7 * ((lastProgress + maxProgress))).toLong()
             // set minimum increment of progress duration to 400ms
             duration = if (animDuration >= 400){
                 animDuration
@@ -221,7 +221,6 @@ class GameWheelView @JvmOverloads constructor(
             }
             addUpdateListener { animation ->
                 lastProgress = animation.animatedValue as Float
-                Log.d(TAG, "setAnim: $maxProgress, $lastProgress")
                 postInvalidate()
                 val progressRounded = lastProgress.roundToInt()
                 if (progressRounded % (360f / wedgeData?.totalValue!!).toInt() == 0 ){
@@ -233,12 +232,37 @@ class GameWheelView @JvmOverloads constructor(
                 override fun onAnimationEnd(animation: Animator) {
                     super.onAnimationEnd(animation)
                     valueAnimator.cancel()
-                    // TODO: 2/25/2021 Send ending value to listener
-
+                    val modelArray = ArrayList<WedgeModel>()
+                    for (model in wedgeData?.wedgeSlices!!) {
+                        modelArray.add(model.value)
+                    }
+                    val data = getClosestToTarget(0, modelArray)
+                    Log.d(TAG, "onAnimationEnd: ${data.displayText}")
+                    tickerListener?.onFinished(v = this@GameWheelView, data)
                 }
             })
             start()
         }
+    }
+
+    fun getClosestToTarget(
+        target: Int,
+        values: ArrayList<WedgeModel>
+    ): WheelSpinnerResponseModel.WheelSpinnerResponseModelItem {
+        require(values.isNotEmpty()) { "The values should be at least one element" }
+        if (values.size == 1) {
+            return values[0].value
+        }
+        var returnModelItem = values[0].value
+        var leastDistance = abs(values[0].indicatorCircleLocation.y - target)
+        for (i in values.indices) {
+            val currentDistance = abs(values[i].indicatorCircleLocation.y - target)
+            if (currentDistance < leastDistance) {
+                leastDistance = currentDistance
+                returnModelItem = values[i].value
+            }
+        }
+        return returnModelItem
     }
 
     private fun resetProgress() {
