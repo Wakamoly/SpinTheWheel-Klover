@@ -15,6 +15,7 @@ import com.lucidsoftworksllc.spinthewheel.models.WheelSpinnerResponseModel
 import com.lucidsoftworksllc.spinthewheel.wheel_view.models.WedgeModel
 import kotlin.math.abs
 import kotlin.math.cos
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -210,11 +211,11 @@ class GameWheelView @JvmOverloads constructor(
 
     private fun setAnim() {
         valueAnimator.cancel()
-        maxProgress = Random.nextDouble(1700.0, 2400.0).toFloat()
+        maxProgress = Random.nextDouble(700.0, 1500.0).toFloat()
         valueAnimator = ValueAnimator.ofFloat(lastProgress, maxProgress).apply {
             interpolator = DecelerateInterpolator()
             // 1.5 second for 100% progress, 750ms for 50% progress, etc.
-            val animDuration = abs(5 * ((lastProgress + maxProgress))).toLong()
+            val animDuration = abs(15 * ((lastProgress + maxProgress))).toLong()
             // set minimum increment of progress duration to 400ms
             duration = if (animDuration >= 400){
                 animDuration
@@ -225,16 +226,17 @@ class GameWheelView @JvmOverloads constructor(
                 lastProgress = animation.animatedValue as Float
                 Log.d(TAG, "setAnim: $maxProgress, $lastProgress")
                 postInvalidate()
+                val progressRounded = lastProgress.roundToInt()
+                if (progressRounded % (360f / wedgeData?.totalValue!!).toInt() == 0 ){
+                    // TODO: 2/25/2021 Update occurs too slowly to accurately calculate
+                    tickerListener?.onTick(v = this@GameWheelView)
+                }
             }
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
                     super.onAnimationEnd(animation)
-                    Log.d(TAG, "onAnimationEnd: Animation ended")
-                    if (maxProgress == 1f) {
-                        resetProgress()
-                    } else {
-                        valueAnimator.cancel()
-                    }
+                    valueAnimator.cancel()
+                    // TODO: 2/25/2021 Send ending value to listener
                 }
             })
             start()

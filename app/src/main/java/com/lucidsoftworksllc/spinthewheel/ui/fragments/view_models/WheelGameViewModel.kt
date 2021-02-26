@@ -18,6 +18,10 @@ class WheelGameViewModel (
     val wheelInfo : LiveData<WheelSpinnerResponseModel>
         get() = _wheelInfo
 
+    private val _dataLoaded = MutableLiveData<Boolean>()
+    val dataLoaded : LiveData<Boolean>
+        get() = _dataLoaded
+
     init {
         getWheelInfo()
     }
@@ -29,8 +33,8 @@ class WheelGameViewModel (
                     showToast.value = result.message
                 }
                 is DataState.Success -> {
-                    //showToast.value = result.data[0].displayText
                     _wheelInfo.value = result.data
+                    _dataLoaded.value = true
                 }
                 else -> {} // Do nothing
             }
