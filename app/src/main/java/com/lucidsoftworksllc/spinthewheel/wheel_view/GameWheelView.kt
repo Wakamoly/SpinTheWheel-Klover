@@ -124,15 +124,15 @@ class GameWheelView @JvmOverloads constructor(
 
     private fun initView() {
         var lastAngle = 0f
-        wedgeData?.wedgeSlices?.forEach {
-            // TODO: 2/26/2021 Seems to randomize order on older API levels?
-            // starting angle is the location of the last angle drawn
-            Log.d(TAG, "initView: ${it.value.value.id}")
-            it.value.startAngle = lastAngle
-            it.value.sweepAngle = 360f / wedgeData?.totalValue!!
-            lastAngle += it.value.sweepAngle
+        wedgeData?.wedgeSlices?.let {
+            for (data in it) {
+                // starting angle is the location of the last angle drawn
+                data.value.startAngle = lastAngle
+                data.value.sweepAngle = 360f / wedgeData?.totalValue!!
+                lastAngle += data.value.sweepAngle
 
-            setTextLocation(it.key)
+                setTextLocation(data.key)
+            }
         }
         invalidate()
         requestLayout()

@@ -6,7 +6,7 @@ import com.lucidsoftworksllc.spinthewheel.models.WheelSpinnerResponseModel
 import com.lucidsoftworksllc.spinthewheel.wheel_view.models.WedgeModel
 
 class WedgeData {
-    val wedgeSlices = HashMap<String, WedgeModel>()
+    val wedgeSlices = LinkedHashMap<String, WedgeModel>()
     var totalValue: Int = 0
 
     /**
