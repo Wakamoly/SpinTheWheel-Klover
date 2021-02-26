@@ -10,6 +10,6 @@ data class WedgeModel(
     var value: WheelSpinnerResponseModel.WheelSpinnerResponseModelItem,
     var startAngle: Float,
     var sweepAngle: Float,
-    var indicatorCircleLocation: PointF,
+    var textLocation: PointF,
     val paint: Paint
 )

@@ -56,6 +56,7 @@ class WheelGameFragment : Fragment() {
             }
 
         })
+
     }
 
     private fun tickTicker() {

@@ -34,6 +34,7 @@ class WheelGameViewModel (
                 }
                 is DataState.Success -> {
                     _wheelInfo.value = result.data
+                    // Set dataLoaded to true, enabling "Spin!" button
                     _dataLoaded.value = true
                 }
                 else -> {} // Do nothing

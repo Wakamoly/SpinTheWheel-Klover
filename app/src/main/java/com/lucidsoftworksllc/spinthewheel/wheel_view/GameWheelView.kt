@@ -37,7 +37,6 @@ class GameWheelView @JvmOverloads constructor(
     private val mainTextPaint = Paint()
     private val oval = RectF()
     private val circleRect = RectF()
-    private val textRect = Rect()
     private var valueAnimator = ValueAnimator()
 
     // Colors
@@ -56,7 +55,7 @@ class GameWheelView @JvmOverloads constructor(
         )
         wedgeData?.wedgeSlices?.let { wedges ->
             wedges.forEach {
-                setIndicatorLocation(it.key)
+                setTextLocation(it.key)
                 canvas?.drawArc(
                     oval,
                     it.value.startAngle + lastProgress,
@@ -64,7 +63,7 @@ class GameWheelView @JvmOverloads constructor(
                     true,
                     it.value.paint
                 )
-                drawIndicatorText(canvas, it.value)
+                drawWedgeText(canvas, it.value)
             }
         }
     }
@@ -116,8 +115,7 @@ class GameWheelView @JvmOverloads constructor(
             // Is even or odd
             if (model.id?.toInt()?.rem(2) ?: 1 == 0) {
                 wedgeData?.add(model.displayText.toString(), model, lightBackColor)
-            }
-            else {
+            } else {
                 wedgeData?.add(model.displayText.toString(), model, backColor)
             }
         }
@@ -132,7 +130,7 @@ class GameWheelView @JvmOverloads constructor(
             it.value.sweepAngle = 360f / wedgeData?.totalValue!!
             lastAngle += it.value.sweepAngle
 
-            setIndicatorLocation(it.key)
+            setTextLocation(it.key)
         }
         invalidate()
         requestLayout()
@@ -145,12 +143,12 @@ class GameWheelView @JvmOverloads constructor(
      *
      * @param key key of wedge slice being altered
      */
-    private fun setIndicatorLocation(key: String) {
+    private fun setTextLocation(key: String) {
         wedgeData?.wedgeSlices?.get(key)?.let {
             val middleAngle = (it.sweepAngle / 2 + it.startAngle) + lastProgress
-            it.indicatorCircleLocation.x = (height.toFloat() / 2 - height / 8) *
+            it.textLocation.x = (height.toFloat() / 2 - height / 8) *
                     cos(Math.toRadians(middleAngle.toDouble())).toFloat() + width / 2
-            it.indicatorCircleLocation.y = (height.toFloat() / 2 - height / 8) *
+            it.textLocation.y = (height.toFloat() / 2 - height / 8) *
                     sin(Math.toRadians(middleAngle.toDouble())).toFloat() + height / 2
         }
     }
@@ -187,19 +185,19 @@ class GameWheelView @JvmOverloads constructor(
         setCircleBounds()
         setGraphicSizes()
         wedgeData?.wedgeSlices?.forEach {
-            setIndicatorLocation(it.key)
+            setTextLocation(it.key)
         }
     }
 
     /**
-     * Draws indicator names onto the canvas
+     * Draws wedge names onto the canvas
      *
      * @param canvas the canvas to draw onto
      * @param wedgeItem the wedge data to draw
      */
-    private fun drawIndicatorText(canvas: Canvas?, wedgeItem: WedgeModel) {
+    private fun drawWedgeText(canvas: Canvas?, wedgeItem: WedgeModel) {
         val path = Path().apply {
-            moveTo(wedgeItem.indicatorCircleLocation.x, wedgeItem.indicatorCircleLocation.y)
+            moveTo(wedgeItem.textLocation.x, wedgeItem.textLocation.y)
             lineTo(oval.centerX(), oval.centerY())
             close()
         }
@@ -209,29 +207,26 @@ class GameWheelView @JvmOverloads constructor(
 
     private fun setAnim() {
         valueAnimator.cancel()
-        maxProgress += Random.nextDouble(700.0, 1500.0).toFloat()
+        maxProgress += Random.nextDouble(1700.0, 2500.0).toFloat()
         valueAnimator = ValueAnimator.ofFloat(lastProgress, maxProgress).apply {
             interpolator = DecelerateInterpolator()
-            val animDuration = abs(7 * ((lastProgress + maxProgress))).toLong()
-            // set minimum increment of progress duration to 400ms
-            duration = if (animDuration >= 400){
-                animDuration
-            }else{
-                400
-            }
+            duration = abs(7 * ((lastProgress + maxProgress))).toLong()
+
             addUpdateListener { animation ->
                 lastProgress = animation.animatedValue as Float
                 postInvalidate()
                 val progressRounded = lastProgress.roundToInt()
                 if (progressRounded % (360f / wedgeData?.totalValue!!).toInt() == 0 ){
-                    // TODO: 2/25/2021 Update occurs too slowly to accurately calculate
+                    // TODO: 2/25/2021 Update occurs too slowly to accurately calculate at high speeds
                     tickerListener?.onTick(v = this@GameWheelView)
                 }
             }
+
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
                     super.onAnimationEnd(animation)
                     valueAnimator.cancel()
+
                     val modelArray = ArrayList<WedgeModel>()
                     for (model in wedgeData?.wedgeSlices!!) {
                         modelArray.add(model.value)
@@ -241,10 +236,14 @@ class GameWheelView @JvmOverloads constructor(
                     tickerListener?.onFinished(v = this@GameWheelView, data)
                 }
             })
+
             start()
         }
     }
 
+    /**
+     * When the animation ends, calculate player's earnings by which view's Y is closest to 0
+     */
     fun getClosestToTarget(
         target: Int,
         values: ArrayList<WedgeModel>
@@ -254,9 +253,9 @@ class GameWheelView @JvmOverloads constructor(
             return values[0].value
         }
         var returnModelItem = values[0].value
-        var leastDistance = abs(values[0].indicatorCircleLocation.y - target)
+        var leastDistance = abs(values[0].textLocation.y - target)
         for (i in values.indices) {
-            val currentDistance = abs(values[i].indicatorCircleLocation.y - target)
+            val currentDistance = abs(values[i].textLocation.y - target)
             if (currentDistance < leastDistance) {
                 leastDistance = currentDistance
                 returnModelItem = values[i].value
@@ -300,21 +299,6 @@ class GameWheelView @JvmOverloads constructor(
      */
     fun setOnTickListener(listener: OnTickerTickListener?) {
         tickerListener = listener
-    }
-
-    fun setOnTickListener(listener: (v: View) -> Unit) {
-        tickerListener = object : OnTickerTickListener {
-            override fun onTick(v: View) {
-                listener(v)
-            }
-
-            override fun onFinished(
-                v: View,
-                data: WheelSpinnerResponseModel.WheelSpinnerResponseModelItem
-            ) {
-                listener(v)
-            }
-        }
     }
 
 }

@@ -19,6 +19,7 @@
             android:background="@color/pink"
             android:text="@string/spin_the_wheel_text"
             android:textAllCaps="false"
+            android:textColor="@color/black"
             style="@style/PinkButtonStyle"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
