@@ -13,6 +13,8 @@ import androidx.core.content.ContextCompat
 import com.lucidsoftworksllc.spinthewheel.R
 import com.lucidsoftworksllc.spinthewheel.models.WheelSpinnerResponseModel
 import com.lucidsoftworksllc.spinthewheel.wheel_view.models.WedgeModel
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -209,17 +211,28 @@ class GameWheelView @JvmOverloads constructor(
 
     private fun setAnim() {
         valueAnimator.cancel()
-        maxProgress += Random.nextDouble(1700.0, 2500.0).toFloat()
+        maxProgress = Random.nextDouble(1700.0, 2500.0).toFloat()
+        val currentTime = System.currentTimeMillis()
         valueAnimator = ValueAnimator.ofFloat(lastProgress, maxProgress).apply {
             interpolator = DecelerateInterpolator()
-            duration = abs(5 * ((lastProgress + maxProgress))).toLong()
+            duration = abs(3 * ((lastProgress + maxProgress))).toLong()
 
             addUpdateListener { animation ->
                 lastProgress = animation.animatedValue as Float
                 postInvalidate()
                 val progressRounded = lastProgress.roundToInt()
-                if (progressRounded % (360f / wedgeData?.totalValue!!).toInt() == 0 ){
-                    // TODO: 2/25/2021 Update occurs too slowly to accurately calculate at high speeds
+                val divisible = (360f / wedgeData?.totalValue!!).toInt()
+
+                val elapsedTime = (System.currentTimeMillis() - currentTime)
+                val velocity = (maxProgress - lastProgress) / elapsedTime
+                // A rather messy solution, but it does the job.
+                if (velocity > 9.0000000E-4f) {
+                    for (i in IntRange(progressRounded, progressRounded+10)){
+                        if (i % divisible == 0){
+                            tickerListener?.onTick(v = this@GameWheelView)
+                        }
+                    }
+                } else if (progressRounded % divisible == 0 ){
                     tickerListener?.onTick(v = this@GameWheelView)
                 }
             }
