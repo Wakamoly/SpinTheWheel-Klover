@@ -104,6 +104,9 @@ class GameWheelView @JvmOverloads constructor(
         mainTextPaint.apply {
             isAntiAlias = true
             color = textColor
+            // textAlign flips the text to match the example demo.
+            textAlign = Paint.Align.RIGHT
+            typeface = Typeface.DEFAULT_BOLD
         }
     }
 
@@ -116,9 +119,9 @@ class GameWheelView @JvmOverloads constructor(
         for (model in newData) {
             // Is even or odd
             if (model.id?.toInt()?.rem(2) ?: 1 == 0) {
-                wedgeData?.add(model.displayText.toString(), model, lightBackColor)
-            } else {
                 wedgeData?.add(model.displayText.toString(), model, backColor)
+            } else {
+                wedgeData?.add(model.displayText.toString(), model, lightBackColor)
             }
         }
         initView()
@@ -150,9 +153,9 @@ class GameWheelView @JvmOverloads constructor(
     private fun setTextLocation(key: String) {
         wedgeData?.wedgeSlices?.get(key)?.let {
             val middleAngle = (it.sweepAngle / 2 + it.startAngle) + lastProgress
-            it.textLocation.x = (height.toFloat() / 2 - height / 8) *
+            it.textLocation.x = (height.toFloat() / 2 - height / 12) *
                     cos(Math.toRadians(middleAngle.toDouble())).toFloat() + width / 2
-            it.textLocation.y = (height.toFloat() / 2 - height / 8) *
+            it.textLocation.y = (height.toFloat() / 2 - height / 12) *
                     sin(Math.toRadians(middleAngle.toDouble())).toFloat() + height / 2
         }
     }
