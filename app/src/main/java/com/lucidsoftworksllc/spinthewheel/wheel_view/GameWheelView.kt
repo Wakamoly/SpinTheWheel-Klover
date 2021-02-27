@@ -152,11 +152,11 @@ class GameWheelView @JvmOverloads constructor(
      */
     private fun setTextLocation(key: String) {
         wedgeData?.wedgeSlices?.get(key)?.let {
-            val middleAngle = (it.sweepAngle / 2 + it.startAngle) + lastProgress
+            val middleAngle = ((it.sweepAngle + (mainTextPaint.textSize / 10)) / (2) + it.startAngle) + lastProgress
             it.textLocation.x = (height.toFloat() / 2 - height / 12) *
-                    cos(Math.toRadians(middleAngle.toDouble())).toFloat() + width / 2
+                    cos(Math.toRadians(middleAngle.toDouble())).toFloat() + (width) / 2
             it.textLocation.y = (height.toFloat() / 2 - height / 12) *
-                    sin(Math.toRadians(middleAngle.toDouble())).toFloat() + height / 2
+                    sin(Math.toRadians(middleAngle.toDouble())).toFloat() + (height) / 2
         }
     }
 
